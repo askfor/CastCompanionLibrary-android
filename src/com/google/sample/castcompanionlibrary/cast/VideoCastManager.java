@@ -400,6 +400,7 @@ public class VideoCastManager extends BaseCastManager
         intent.putExtra(EXTRA_MEDIA, mediaWrapper);
         intent.putExtra(EXTRA_START_POINT, position);
         intent.putExtra(EXTRA_SHOULD_START, shouldStart);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
     }
 
