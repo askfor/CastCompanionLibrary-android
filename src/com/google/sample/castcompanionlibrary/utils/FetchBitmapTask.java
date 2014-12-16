@@ -17,16 +17,19 @@
 package com.google.sample.castcompanionlibrary.utils;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.view.Display;
+import android.view.WindowManager;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.ImageSize;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -36,8 +39,8 @@ import java.net.URL;
  * {@code execute} to handle a uniform treatment of ThreadPool across various versions of Android.
  */
 public abstract class FetchBitmapTask extends AsyncTask<Uri, Void, Bitmap> {
-    private final int mPreferredWidth;
-    private final int mPreferredHeight;
+    private int mPreferredWidth;
+    private int mPreferredHeight;
 
     /**
      * Constructs a new FetchBitmapTask that will do scaling.
@@ -57,6 +60,18 @@ public abstract class FetchBitmapTask extends AsyncTask<Uri, Void, Bitmap> {
         this(0, 0);
     }
 
+    public FetchBitmapTask(Context context) {
+        this(0, 0);
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+        int height = size.y;
+        mPreferredWidth = width;
+        mPreferredHeight = height;
+    }
+
     @Override
     protected Bitmap doInBackground(Uri... uris) {
         if (uris.length != 1 || uris[0] == null) {
@@ -70,24 +85,39 @@ public abstract class FetchBitmapTask extends AsyncTask<Uri, Void, Bitmap> {
         } catch (MalformedURLException e) {
             return null;
         }
-        HttpURLConnection urlConnection = null;
-        try {
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setDoInput(true);
 
-            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
-                bitmap = BitmapFactory.decodeStream(stream);
-                if ((mPreferredWidth > 0) && (mPreferredHeight > 0)) {
-                    bitmap = scaleBitmap(bitmap);
-                }
-            }
-        } catch (IOException e) { /* ignore */
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
+
+        ImageLoader imageLoader = ImageLoader.getInstance();
+        DisplayImageOptions options = new DisplayImageOptions.Builder()
+                .showImageOnFail(android.R.color.transparent)
+                .build();
+
+        ImageSize targetSize;
+        if((mPreferredWidth > 0) && (mPreferredHeight > 0)) {
+            targetSize = new ImageSize(mPreferredWidth, mPreferredHeight);
+        }else{
+            targetSize = null;
         }
+        bitmap = imageLoader.loadImageSync(uris[0].toString(), targetSize, options);
+
+//        HttpURLConnection urlConnection = null;
+//        try {
+//            urlConnection = (HttpURLConnection) url.openConnection();
+//            urlConnection.setDoInput(true);
+//
+//            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+//                InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
+//                bitmap = BitmapFactory.decodeStream(stream);
+//                if ((mPreferredWidth > 0) && (mPreferredHeight > 0)) {
+//                    bitmap = scaleBitmap(bitmap);
+//                }
+//            }
+//        } catch (IOException e) { /* ignore */
+//        } finally {
+//            if (urlConnection != null) {
+//                urlConnection.disconnect();
+//            }
+//        }
 
         return bitmap;
     }

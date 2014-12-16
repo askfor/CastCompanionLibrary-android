@@ -537,7 +537,7 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
             return;
         }
         mUrlAndBitmap = null;
-        mImageAsyncTask = new FetchBitmapTask() {
+        mImageAsyncTask = new FetchBitmapTask(getActivity()) {
             @Override
             protected void onPostExecute(Bitmap bitmap) {
                 if (null != bitmap) {

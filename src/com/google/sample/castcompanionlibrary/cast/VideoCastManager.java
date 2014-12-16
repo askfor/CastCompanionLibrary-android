@@ -1745,7 +1745,7 @@ public class VideoCastManager extends BaseCastManager
                             METADATA_KEY_ARTWORK, bm).apply();
         } else {
 
-            new FetchBitmapTask() {
+            new FetchBitmapTask(mContext) {
                 @Override
                 protected void onPostExecute(Bitmap bitmap) {
                     if (mRemoteControlClientCompat != null) {
