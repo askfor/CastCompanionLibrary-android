@@ -16,14 +16,13 @@
 
 package com.google.sample.castcompanionlibrary.cast.player;
 
-import com.google.sample.castcompanionlibrary.cast.tracks.OnTracksSelectedListener;
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
-import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
-import com.google.sample.castcompanionlibrary.cast.exceptions
-        .TransientNetworkDisconnectionException;
-
 import android.view.View;
 import android.widget.SeekBar;
+
+import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
+import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
+import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
+import com.google.sample.castcompanionlibrary.cast.tracks.OnTracksSelectedListener;
 
 public interface OnVideoCastControllerListener extends OnTracksSelectedListener {
 

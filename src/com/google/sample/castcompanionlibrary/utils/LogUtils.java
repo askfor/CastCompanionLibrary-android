@@ -16,10 +16,10 @@
 
 package com.google.sample.castcompanionlibrary.utils;
 
+import android.util.Log;
+
 import com.google.sample.castcompanionlibrary.BuildConfig;
 import com.google.sample.castcompanionlibrary.cast.BaseCastManager;
-
-import android.util.Log;
 
 /**
  * Provides a simple wrapper to control logging in development vs production environment. This
@@ -51,6 +51,7 @@ public class LogUtils {
 
     @SuppressWarnings("unused")
     public static void LOGD(final String tag, String message) {
+        Log.i(tag, message);
         if (BuildConfig.DEBUG || Log.isLoggable(tag, Log.DEBUG)) {
             Log.d(tag, getVersionPrefix() + message);
         }
