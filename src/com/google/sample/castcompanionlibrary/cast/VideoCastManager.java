@@ -47,6 +47,7 @@ import com.google.android.gms.cast.CastStatusCodes;
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.MediaStatus;
+import com.google.android.gms.cast.MediaTrack;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.cast.RemoteMediaPlayer.MediaChannelResult;
 import com.google.android.gms.cast.TextTrackStyle;
@@ -65,6 +66,7 @@ import com.google.sample.castcompanionlibrary.cast.exceptions.OnFailedListener;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
 import com.google.sample.castcompanionlibrary.cast.player.IMediaAuthService;
 import com.google.sample.castcompanionlibrary.cast.player.VideoCastControllerActivity;
+import com.google.sample.castcompanionlibrary.cast.tracks.OnTracksSelectedListener;
 import com.google.sample.castcompanionlibrary.cast.tracks.TracksPreferenceManager;
 import com.google.sample.castcompanionlibrary.notification.VideoCastNotificationService;
 import com.google.sample.castcompanionlibrary.remotecontrol.RemoteControlClientCompat;
@@ -114,13 +116,13 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
  * (see {@link IVideoCastConsumer}). Since the number of these callbacks is usually much larger
  * than what a single application might be interested in, there is a no-op implementation of this
  * interface (see {@link VideoCastConsumerImpl}) that applications can subclass to override only
- * those methods that they are interested in. Since this library depends on the cast
- * functionalities provided by the Google Play services, the library checks to ensure that the
- * right version of that service is installed. It also provides a simple static method
+ * those methods that they are interested in. Since this library depends on the cast functionalities
+ * provided by the Google Play services, the library checks to ensure that the right version of that
+ * service is installed. It also provides a simple static method
  * <code>checkGooglePlayServices()</code> that clients can call at an early stage of their
- * applications to provide a dialog for users if they need to update/activate their GMS library. To
- * learn more about this library, please read the documentation that is distributed as part of this
- * library.
+ * applications to provide a dialog for users if they need to update/activate their Google Play
+ * Services library. To learn more about this library, please read the documentation that is
+ * distributed as part of this library.
  */
 public class VideoCastManager extends BaseCastManager
         implements OnMiniControllerChangedListener, OnFailedListener {
@@ -131,6 +133,7 @@ public class VideoCastManager extends BaseCastManager
     public static final String EXTRA_SHOULD_START = "shouldStart";
     public static final String EXTRA_CUSTOM_DATA = "customData";
     public static final long DEFAULT_LIVE_STREAM_DURATION_MS = 2 * 3600 * 1000L; // 2hrs
+    public static final String PREFS_KEY_START_ACTIVITY = "ccl-start-cast-activity";
 
     /**
      * Volume can be controlled at two different layers, one is at the "stream" level and one at
@@ -154,7 +157,9 @@ public class VideoCastManager extends BaseCastManager
     private final ComponentName mMediaButtonReceiverComponent;
     private final String mDataNamespace;
     private Cast.MessageReceivedCallback mDataChannel;
-    private Set<IVideoCastConsumer> mVideoConsumers = Collections.newSetFromMap(new ConcurrentHashMap());
+    private final Set<IVideoCastConsumer> mVideoConsumers = Collections.newSetFromMap(new ConcurrentHashMap());
+    private final Set<OnTracksSelectedListener> mTracksSelectedListeners =
+            Collections.newSetFromMap(new ConcurrentHashMap());
     private IMediaAuthService mAuthService;
     private long mLiveStreamDuration = DEFAULT_LIVE_STREAM_DURATION_MS;
     private TracksPreferenceManager mTrackManager;
@@ -215,30 +220,6 @@ public class VideoCastManager extends BaseCastManager
         return sInstance;
     }
 
-    /**
-     * Returns the initialized instances of this class. If it is not initialized yet, a
-     * {@link CastException} will be thrown. The {@link Context} that is passed as the argument
-     * will be used to update the context for the <code>VideoCastManager</code> instance. The main
-     * purpose of updating context is to enable the library to provide {@link Context} related
-     * functionalities, e.g. it can create an error dialog if needed. This method is preferred over
-     * the similar one without a context argument.
-     *
-     * @param context the current Context
-     * @return
-     * @throws CastException
-     * @see {@link initialize()}, {@link setContext()}
-     */
-    public static VideoCastManager getInstance(Context context) throws CastException {
-        if (null == sInstance) {
-            LOGE(TAG, "No VideoCastManager instance was built, you need to build one first "
-                    + "(called from Context: " + context + ")");
-            throw new CastException();
-        }
-        LOGD(TAG, "Updated context to: " + context);
-        sInstance.mContext = context;
-        return sInstance;
-    }
-
     protected VideoCastManager(Context context, String applicationId, Class<?> targetActivity,
             String dataNamespace) {
         super(context, applicationId);
@@ -257,8 +238,8 @@ public class VideoCastManager extends BaseCastManager
 
         mMiniControllers = Collections.synchronizedSet(new HashSet<IMiniController>());
 
-        mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        mMediaButtonReceiverComponent = new ComponentName(context, VideoIntentReceiver.class);
+        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mMediaButtonReceiverComponent = new ComponentName(mContext, VideoIntentReceiver.class);
     }
 
     /*============================================================================================*/
@@ -362,6 +343,10 @@ public class VideoCastManager extends BaseCastManager
     /*========== VideoCastControllerActivity management ==========================================*/
     /*============================================================================================*/
 
+    private void setFlagForStartCastControllerActivity(Context context) {
+        Utils.saveBooleanToPreference(context, PREFS_KEY_START_ACTIVITY, true);
+    }
+
     /**
      * Launches the VideoCastControllerActivity that provides a default Cast Player page.
      *
@@ -381,6 +366,7 @@ public class VideoCastManager extends BaseCastManager
         if (null != customData) {
             intent.putExtra(EXTRA_CUSTOM_DATA, customData.toString());
         }
+        setFlagForStartCastControllerActivity(context);
         context.startActivity(intent);
     }
 
@@ -400,6 +386,7 @@ public class VideoCastManager extends BaseCastManager
         intent.putExtra(EXTRA_START_POINT, position);
         intent.putExtra(EXTRA_SHOULD_START, shouldStart);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        setFlagForStartCastControllerActivity(context);
         context.startActivity(intent);
     }
 
@@ -415,6 +402,7 @@ public class VideoCastManager extends BaseCastManager
             this.mAuthService = authService;
             Intent intent = new Intent(context, VideoCastControllerActivity.class);
             intent.putExtra(EXTRA_HAS_AUTH, true);
+            setFlagForStartCastControllerActivity(context);
             context.startActivity(intent);
         }
     }
@@ -422,15 +410,16 @@ public class VideoCastManager extends BaseCastManager
     /**
      * Launches the {@link VideoCastControllerActivity} that provides a default Cast Player page.
      *
-     * @param ctx
+     * @param context
      * @param mediaInfo pointing to the media that is or will be casted
      * @param position (in milliseconds) is the starting point of the media playback
      * @param shouldStart indicates if the remote playback should start after launching the new
      * page
      */
-    public void startCastControllerActivity(Context ctx,
+    public void startCastControllerActivity(Context context,
             MediaInfo mediaInfo, int position, boolean shouldStart) {
-        startCastControllerActivity(ctx, Utils.fromMediaInfo(mediaInfo), position, shouldStart);
+        setFlagForStartCastControllerActivity(context);
+        startCastControllerActivity(context, Utils.fromMediaInfo(mediaInfo), position, shouldStart);
     }
 
     /**
@@ -440,6 +429,13 @@ public class VideoCastManager extends BaseCastManager
      */
     public IMediaAuthService getMediaAuthService() {
         return mAuthService;
+    }
+
+    /**
+     * Sets the {@link com.google.sample.castcompanionlibrary.cast.player.IMediaAuthService}.
+     */
+    public void setMediaAuthService(IMediaAuthService authService) {
+        mAuthService = authService;
     }
 
     /**
@@ -887,13 +883,11 @@ public class VideoCastManager extends BaseCastManager
         try {
             volume = getVolume();
             boolean isMute = isMute();
-            synchronized (mVideoConsumers) {
-                for (IVideoCastConsumer consumer : mVideoConsumers) {
-                    try {
-                        consumer.onVolumeChanged(volume, isMute);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onVolumeChanged(): Failed to inform " + consumer, e);
-                    }
+            for (IVideoCastConsumer consumer : mVideoConsumers) {
+                try {
+                    consumer.onVolumeChanged(volume, isMute);
+                } catch (Exception e) {
+                    LOGE(TAG, "onVolumeChanged(): Failed to inform " + consumer, e);
                 }
             }
         } catch (Exception e1) {
@@ -993,9 +987,8 @@ public class VideoCastManager extends BaseCastManager
         LOGD(TAG, "onApplicationConnectionFailed() reached with errorCode: " + errorCode);
         if (mReconnectionStatus == ReconnectionStatus.IN_PROGRESS) {
             if (errorCode == CastStatusCodes.APPLICATION_NOT_RUNNING) {
-                // while trying to re-establish session, we
-                // found out that the app is not running so we need
-                // to disconnect
+                // while trying to re-establish session, we found out that the app is not running
+                // so we need to disconnect
                 mReconnectionStatus = ReconnectionStatus.INACTIVE;
                 onDeviceSelected(null);
             }
@@ -1014,16 +1007,16 @@ public class VideoCastManager extends BaseCastManager
                     case CastStatusCodes.APPLICATION_NOT_FOUND:
                         LOGD(TAG, "onApplicationConnectionFailed(): failed due to: " +
                                 "ERROR_APPLICATION_NOT_FOUND");
-                        Utils.showErrorDialog(mContext, R.string.failed_to_find_app);
+                        Utils.showToast(mContext, R.string.failed_to_find_app);
                         break;
                     case CastStatusCodes.TIMEOUT:
                         LOGD(TAG, "onApplicationConnectionFailed(): failed due to: ERROR_TIMEOUT");
-                        Utils.showErrorDialog(mContext, R.string.failed_app_launch_timeout);
+                        Utils.showToast(mContext, R.string.failed_app_launch_timeout);
                         break;
                     default:
                         LOGD(TAG, "onApplicationConnectionFailed(): failed due to: errorcode="
                                 + errorCode);
-                        Utils.showErrorDialog(mContext, R.string.failed_to_launch_app);
+                        Utils.showToast(mContext, R.string.failed_to_launch_app);
                         break;
                 }
             }
@@ -1337,7 +1330,7 @@ public class VideoCastManager extends BaseCastManager
 
     private void attachMediaChannel() throws TransientNetworkDisconnectionException,
             NoConnectionException {
-        LOGD(TAG, "attachMedia()");
+        LOGD(TAG, "attachMediaChannel()");
         checkConnectivity();
         if (null == mRemoteMediaPlayer) {
             mRemoteMediaPlayer = new RemoteMediaPlayer();
@@ -1575,9 +1568,11 @@ public class VideoCastManager extends BaseCastManager
                 updateRemoteControl(true);
                 long mediaDurationLeft = getTimeLeftForMedia();
                 startReconnectionService(mediaDurationLeft);
+                startNotificationService(mUiVisible);
             } else if (mState == MediaStatus.PLAYER_STATE_PAUSED) {
                 LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = paused");
                 updateRemoteControl(false);
+                startNotificationService(mUiVisible);
             } else if (mState == MediaStatus.PLAYER_STATE_IDLE) {
                 LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = idle");
                 updateRemoteControl(false);
@@ -2017,10 +2012,10 @@ public class VideoCastManager extends BaseCastManager
      * {@link dispatchEvent} and call this method:
      * <pre>
      public boolean dispatchKeyEvent(KeyEvent event) {
-        if (mCastManager.onDispatchVolumeKeyEvent(event, VOLUME_DELTA)) {
-            return true;
-        }
-        return super.dispatchKeyEvent(event);
+         if (mCastManager.onDispatchVolumeKeyEvent(event, VOLUME_DELTA)) {
+             return true;
+         }
+         return super.dispatchKeyEvent(event);
      }
      * </pre>
      *
@@ -2248,6 +2243,41 @@ public class VideoCastManager extends BaseCastManager
             return mRemoteMediaPlayer.getMediaStatus().getActiveTrackIds();
         }
         return null;
+    }
+
+    /**
+     * Adds an {@link com.google.sample.castcompanionlibrary.cast.tracks.OnTracksSelectedListener}
+     * to the lis of listeners.
+     */
+    public void addTracksSelectedListener(OnTracksSelectedListener listener) {
+        if (listener != null) {
+            mTracksSelectedListeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes an {@link com.google.sample.castcompanionlibrary.cast.tracks
+     * .OnTracksSelectedListener} from the lis of listeners.
+     */
+    public void removeTracksSelectedListener(OnTracksSelectedListener listener) {
+        if (listener != null) {
+            mTracksSelectedListeners.remove(listener);
+        }
+    }
+
+    /**
+     * Notifies all the {@link com.google.sample.castcompanionlibrary.cast.tracks
+     * .OnTracksSelectedListener} that the set of active tracks has changed.
+     *
+     * @param tracks the set of active tracks. Must be {@code non-null} but can be an empty list.
+     */
+    public void notifyTracksSelectedListeners(List<MediaTrack> tracks) {
+        if (tracks == null) {
+            throw new IllegalArgumentException("tracks must not be null");
+        }
+        for(OnTracksSelectedListener listener : mTracksSelectedListeners) {
+            listener.onTracksSelected(tracks);
+        }
     }
 
 }

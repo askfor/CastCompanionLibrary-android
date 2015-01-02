@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Google Inc. All Rights Reserved.
+ * Copyright (C) 2014 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ import android.support.v7.media.MediaRouter.RouteInfo;
 import android.text.TextUtils;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * A concrete subclass of {@link BaseCastManager} that is suitable for data-centric applications
@@ -72,9 +72,9 @@ import java.util.Set;
  * provided by the Google Play services, the library checks to ensure that the right version of that
  * service is installed. It also provides a simple static method
  * <code>checkGooglePlayServices()</code> that clients can call at an early stage of their
- * applications to provide a dialog for users if they need to update/activate their GMS library. To
- * learn more about this library, please read the documentation that is distributed as part of this
- * library.
+ * applications to provide a dialog for users if they need to update/activate their Google Play
+ * Services library. To learn more about this library, please read the documentation that is
+ * distributed as part of this library.
  */
 public class DataCastManager extends BaseCastManager
         implements Cast.MessageReceivedCallback {
@@ -82,7 +82,8 @@ public class DataCastManager extends BaseCastManager
     private static final String TAG = LogUtils.makeLogTag(DataCastManager.class);
     private static DataCastManager sInstance;
     private final Set<String> mNamespaceList = new HashSet<String>();
-    private Set<IDataCastConsumer> mDataConsumers;
+    private final Set<IDataCastConsumer> mDataConsumers =
+            new CopyOnWriteArraySet<IDataCastConsumer>();
 
     /**
      * Initializes the DataCastManager for clients. Before clients can use DataCastManager, they
@@ -113,7 +114,6 @@ public class DataCastManager extends BaseCastManager
 
     protected DataCastManager(Context context, String applicationId, String... namespaces) {
         super(context, applicationId);
-        mDataConsumers = Collections.synchronizedSet(new HashSet<IDataCastConsumer>());
         if (null != namespaces) {
             for (String namespace : namespaces) {
                 mNamespaceList.add(namespace);
@@ -135,29 +135,6 @@ public class DataCastManager extends BaseCastManager
                     "call initialize() first");
             throw new CastException();
         }
-        return sInstance;
-    }
-
-    /**
-     * Returns the initialized instance of this class. If it is not initialized yet, a
-     * {@link CastException} will be thrown. The {@link Context} that is passed as the argument will
-     * be used to update the context. The main purpose of updating context is to enable the library
-     * to provide {@link Context} related functionalities, e.g. it can create an error dialog if
-     * needed. This method is preferred over the similar one without a context argument.
-     *
-     * @see {@link initialize()}, {@link setContext()}
-     * @param ctx the current Context
-     * @return
-     * @throws CastException
-     */
-    public static DataCastManager getInstance(Context ctx) throws CastException {
-        if (null == sInstance) {
-            LOGE(TAG, "No DataCastManager instance was initialized, you need to " +
-                    "call initialize() first");
-            throw new CastException();
-        }
-        LOGD(TAG, "Updated context to: " + ctx.getClass().getName());
-        sInstance.mContext = ctx;
         return sInstance;
     }
 
@@ -352,14 +329,12 @@ public class DataCastManager extends BaseCastManager
         try {
             attachDataChannels();
             mSessionId = sessionId;
-            synchronized (mDataConsumers) {
-                for (IDataCastConsumer consumer : mDataConsumers) {
-                    try {
-                        consumer.onApplicationConnected(appMetadata, applicationStatus, sessionId,
-                                wasLaunched);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onApplicationConnected(): Failed to inform " + consumer, e);
-                    }
+            for (IDataCastConsumer consumer : mDataConsumers) {
+                try {
+                    consumer.onApplicationConnected(appMetadata, applicationStatus, sessionId,
+                            wasLaunched);
+                } catch (Exception e) {
+                    LOGE(TAG, "onApplicationConnected(): Failed to inform " + consumer, e);
                 }
             }
         } catch (IllegalStateException e) {
@@ -414,25 +389,21 @@ public class DataCastManager extends BaseCastManager
     @Override
     public void onApplicationConnectionFailed(int errorCode) {
         onDeviceSelected(null);
-        synchronized (mDataConsumers) {
-            for (IDataCastConsumer consumer : mDataConsumers) {
-                try {
-                    consumer.onApplicationConnectionFailed(errorCode);
-                } catch (Exception e) {
-                    LOGE(TAG, "onApplicationConnectionFailed(): Failed to inform " + consumer, e);
-                }
+        for (IDataCastConsumer consumer : mDataConsumers) {
+            try {
+                consumer.onApplicationConnectionFailed(errorCode);
+            } catch (Exception e) {
+                LOGE(TAG, "onApplicationConnectionFailed(): Failed to inform " + consumer, e);
             }
         }
     }
 
     public void onApplicationDisconnected(int errorCode) {
-        synchronized (mDataConsumers) {
-            for (IDataCastConsumer consumer : mDataConsumers) {
-                try {
-                    consumer.onApplicationDisconnected(errorCode);
-                } catch (Exception e) {
-                    LOGE(TAG, "onApplicationDisconnected(): Failed to inform " + consumer, e);
-                }
+        for (IDataCastConsumer consumer : mDataConsumers) {
+            try {
+                consumer.onApplicationDisconnected(errorCode);
+            } catch (Exception e) {
+                LOGE(TAG, "onApplicationDisconnected(): Failed to inform " + consumer, e);
             }
         }
         if (null != mMediaRouter) {
@@ -451,13 +422,11 @@ public class DataCastManager extends BaseCastManager
             appStatus = Cast.CastApi.getApplicationStatus(mApiClient);
             LOGD(TAG, "onApplicationStatusChanged() reached: "
                     + Cast.CastApi.getApplicationStatus(mApiClient));
-            synchronized (mDataConsumers) {
-                for (IDataCastConsumer consumer : mDataConsumers) {
-                    try {
-                        consumer.onApplicationStatusChanged(appStatus);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onApplicationStatusChanged(): Failed to inform " + consumer, e);
-                    }
+            for (IDataCastConsumer consumer : mDataConsumers) {
+                try {
+                    consumer.onApplicationStatusChanged(appStatus);
+                } catch (Exception e) {
+                    LOGE(TAG, "onApplicationStatusChanged(): Failed to inform " + consumer, e);
                 }
             }
         } catch (IllegalStateException e) {
@@ -468,13 +437,11 @@ public class DataCastManager extends BaseCastManager
 
     @Override
     public void onApplicationStopFailed(int errorCode) {
-        synchronized (mDataConsumers) {
-            for (IDataCastConsumer consumer : mDataConsumers) {
-                try {
-                    consumer.onApplicationStopFailed(errorCode);
-                } catch (Exception e) {
-                    LOGE(TAG, "onApplicationStopFailed(): Failed to inform " + consumer, e);
-                }
+        for (IDataCastConsumer consumer : mDataConsumers) {
+            try {
+                consumer.onApplicationStopFailed(errorCode);
+            } catch (Exception e) {
+                LOGE(TAG, "onApplicationStopFailed(): Failed to inform " + consumer, e);
             }
         }
     }
@@ -489,25 +456,21 @@ public class DataCastManager extends BaseCastManager
 
     @Override
     public void onMessageReceived(CastDevice castDevice, String namespace, String message) {
-        synchronized (mDataConsumers) {
-            for (IDataCastConsumer consumer : mDataConsumers) {
-                try {
-                    consumer.onMessageReceived(castDevice, namespace, message);
-                } catch (Exception e) {
-                    LOGE(TAG, "onMessageReceived(): Failed to inform " + consumer, e);
-                }
+        for (IDataCastConsumer consumer : mDataConsumers) {
+            try {
+                consumer.onMessageReceived(castDevice, namespace, message);
+            } catch (Exception e) {
+                LOGE(TAG, "onMessageReceived(): Failed to inform " + consumer, e);
             }
         }
     }
 
     public void onMessageSendFailed(Status result) {
-        synchronized (mDataConsumers) {
-            for (IDataCastConsumer consumer : mDataConsumers) {
-                try {
-                    consumer.onMessageSendFailed(result);
-                } catch (Exception e) {
-                    LOGE(TAG, "onMessageSendFailed(): Failed to inform " + consumer, e);
-                }
+        for (IDataCastConsumer consumer : mDataConsumers) {
+            try {
+                consumer.onMessageSendFailed(result);
+            } catch (Exception e) {
+                LOGE(TAG, "onMessageSendFailed(): Failed to inform " + consumer, e);
             }
         }
     }
@@ -527,9 +490,7 @@ public class DataCastManager extends BaseCastManager
         if (null != listener) {
             super.addBaseCastConsumer(listener);
             boolean result = false;
-            synchronized (mDataConsumers) {
-                result = mDataConsumers.add(listener);
-            }
+            result = mDataConsumers.add(listener);
             if (result) {
                 LOGD(TAG, "Successfully added the new DataCastConsumer listener " + listener);
             } else {
@@ -547,9 +508,7 @@ public class DataCastManager extends BaseCastManager
     public void removeDataCastConsumer(IDataCastConsumer listener) {
         if (null != listener) {
             super.removeBaseCastConsumer(listener);
-            synchronized (mDataConsumers) {
-                mDataConsumers.remove(listener);
-            }
+            mDataConsumers.remove(listener);
         }
     }
 
