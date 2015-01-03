@@ -851,7 +851,7 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
                 protected Integer doInBackground(Void... params) {
                     for (int i = 0; i < timeoutInSeconds; i++) {
                         LOGD(TAG, "Reconnection: Attempt " + (i + 1));
-                        if (mReconnectionTask.isCancelled()) {
+                        if (mReconnectionTask == null || mReconnectionTask.isCancelled()) {
                             return SUCCESS;
                         }
                         try {
