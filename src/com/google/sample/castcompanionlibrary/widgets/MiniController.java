@@ -74,6 +74,7 @@ public class MiniController extends RelativeLayout implements IMiniController {
     private int mStreamType = MediaInfo.STREAM_TYPE_BUFFERED;
     private Drawable mStopDrawable;
     private FetchBitmapTask mFetchBitmapTask;
+    private Context mContext;
 
     /**
      * @param context
@@ -86,6 +87,7 @@ public class MiniController extends RelativeLayout implements IMiniController {
         mPauseDrawable = getResources().getDrawable(R.drawable.ic_mini_controller_pause);
         mPlayDrawable = getResources().getDrawable(R.drawable.ic_mini_controller_play);
         mStopDrawable = getResources().getDrawable(R.drawable.ic_mini_controller_stop);
+        mContext = context;
         loadViews();
         setupCallbacks();
     }
@@ -184,7 +186,7 @@ public class MiniController extends RelativeLayout implements IMiniController {
         if (mFetchBitmapTask != null) {
             mFetchBitmapTask.cancel(true);
         }
-        mFetchBitmapTask = new FetchBitmapTask() {
+        mFetchBitmapTask = new FetchBitmapTask(mContext) {
             @Override
             protected void onPostExecute(Bitmap bitmap) {
                 if (bitmap == null) {

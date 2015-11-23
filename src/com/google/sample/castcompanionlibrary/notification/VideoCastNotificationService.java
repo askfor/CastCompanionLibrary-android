@@ -192,7 +192,7 @@ public class VideoCastNotificationService extends Service {
             LOGE(TAG, "Failed to build notification");
         }
 
-        mBitmapDecoderTask = new FetchBitmapTask(400, 400) {
+        mBitmapDecoderTask = new FetchBitmapTask(this, 400, 400) {
             @Override
             protected void onPostExecute(Bitmap bitmap) {
                 try {

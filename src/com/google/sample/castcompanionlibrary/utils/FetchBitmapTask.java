@@ -26,12 +26,11 @@ import android.os.Build;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.ImageSize;
+import com.bumptech.glide.Glide;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 
 /**
  * An AsyncTask to fetch an image over HTTP and scale it to a desired size. Clients need to extend
@@ -41,6 +40,7 @@ import java.net.URL;
 public abstract class FetchBitmapTask extends AsyncTask<Uri, Void, Bitmap> {
     private int mPreferredWidth;
     private int mPreferredHeight;
+    private Context mContext;
 
     /**
      * Constructs a new FetchBitmapTask that will do scaling.
@@ -48,20 +48,17 @@ public abstract class FetchBitmapTask extends AsyncTask<Uri, Void, Bitmap> {
      * @param preferredWidth The preferred image width.
      * @param preferredHeight The preferred image height.
      */
-    public FetchBitmapTask(int preferredWidth, int preferredHeight) {
+    public FetchBitmapTask(Context context, int preferredWidth, int preferredHeight) {
         mPreferredWidth = preferredWidth;
         mPreferredHeight = preferredHeight;
+        mContext = context;
     }
 
     /**
      * Constructs a new FetchBitmapTask. No scaling will be performed if you use this constructor.
      */
-    public FetchBitmapTask() {
-        this(0, 0);
-    }
-
     public FetchBitmapTask(Context context) {
-        this(0, 0);
+        this(context, 0, 0);
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         Point size = new Point();
@@ -86,40 +83,23 @@ public abstract class FetchBitmapTask extends AsyncTask<Uri, Void, Bitmap> {
             return null;
         }
 
-
-        ImageLoader imageLoader = ImageLoader.getInstance();
-        DisplayImageOptions options = new DisplayImageOptions.Builder()
-                .showImageOnFail(android.R.color.transparent)
-                .build();
-
-        ImageSize targetSize;
+        int w, h;
         if((mPreferredWidth > 0) && (mPreferredHeight > 0)) {
-            targetSize = new ImageSize(mPreferredWidth, mPreferredHeight);
+            w = mPreferredWidth;
+            h = mPreferredHeight;
         }else{
-            targetSize = null;
+            w = -1;
+            h = -1;
         }
-        bitmap = imageLoader.loadImageSync(uris[0].toString(), targetSize, options);
-
-//        HttpURLConnection urlConnection = null;
-//        try {
-//            urlConnection = (HttpURLConnection) url.openConnection();
-//            urlConnection.setDoInput(true);
-//
-//            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-//                InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
-//                bitmap = BitmapFactory.decodeStream(stream);
-//                if ((mPreferredWidth > 0) && (mPreferredHeight > 0)) {
-//                    bitmap = scaleBitmap(bitmap);
-//                }
-//            }
-//        } catch (IOException e) { /* ignore */
-//        } finally {
-//            if (urlConnection != null) {
-//                urlConnection.disconnect();
-//            }
-//        }
-
-        return bitmap;
+        try {
+            Bitmap img = Glide.with(mContext).load(url).asBitmap().into(w, h).get();
+            return img;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**

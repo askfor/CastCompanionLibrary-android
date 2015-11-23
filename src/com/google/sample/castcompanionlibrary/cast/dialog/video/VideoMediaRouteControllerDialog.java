@@ -178,7 +178,7 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
             mFetchBitmap.cancel(true);
         }
 
-        mFetchBitmap = new FetchBitmapTask(400, 400) {
+        mFetchBitmap = new FetchBitmapTask(mContext, 400, 400) {
             @Override
             protected void onPostExecute(Bitmap bitmap) {
                 mIcon.setImageBitmap(bitmap);
