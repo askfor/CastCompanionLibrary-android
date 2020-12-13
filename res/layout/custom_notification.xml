@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content" >
 
@@ -12,7 +13,7 @@
         android:adjustViewBounds="false"
         android:cropToPadding="false"
         android:scaleType="centerCrop"
-        android:src="@drawable/video_placeholder_200x200"/>
+        app:srcCompat="@drawable/video_placeholder_200x200"/>
 
     <ImageView
         android:id="@+id/removeView"
@@ -21,7 +22,7 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:layout_marginRight="5dp"
-        android:src="@drawable/ic_av_close_sm_dark"/>
+        app:srcCompat="@drawable/ic_av_close_sm_dark"/>
 
     <ImageView
         android:id="@+id/playPauseView"
@@ -30,7 +31,7 @@
         android:layout_centerVertical="true"
         android:layout_marginRight="15dp"
         android:layout_toLeftOf="@+id/removeView"
-        android:src="@drawable/ic_av_pause_sm_dark"/>
+        app:srcCompat="@drawable/ic_av_pause_sm_dark"/>
 
     <ProgressBar
         android:id="@+id/loadingView"

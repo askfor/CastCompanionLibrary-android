@@ -21,7 +21,7 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 import android.app.PendingIntent;
 import android.graphics.Bitmap;
 import android.os.Looper;
-import android.support.v7.media.MediaRouter;
+import androidx.mediarouter.media.MediaRouter;
 import android.util.Log;
 
 import java.lang.reflect.Field;

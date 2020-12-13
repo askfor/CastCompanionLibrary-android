@@ -27,7 +27,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
-                android:src="@drawable/ic_av_pause_dark" />
+                app:srcCompat="@drawable/ic_av_pause_dark" />
 
             <TextView
                 android:id="@+id/liveText"
@@ -68,7 +68,7 @@
                 android:id="@+id/cc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/cc"
+                app:srcCompat="@drawable/cc"
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="16dp"
                 android:layout_centerInParent="true"
@@ -117,7 +117,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:visibility="gone" />
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"

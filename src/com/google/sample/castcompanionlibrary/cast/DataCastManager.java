@@ -17,8 +17,8 @@
 package com.google.sample.castcompanionlibrary.cast;
 
 import android.content.Context;
-import android.support.v7.app.MediaRouteDialogFactory;
-import android.support.v7.media.MediaRouter.RouteInfo;
+import androidx.mediarouter.app.MediaRouteDialogFactory;
+import androidx.mediarouter.media.MediaRouter.RouteInfo;
 import android.text.TextUtils;
 
 import com.google.android.gms.cast.ApplicationMetadata;

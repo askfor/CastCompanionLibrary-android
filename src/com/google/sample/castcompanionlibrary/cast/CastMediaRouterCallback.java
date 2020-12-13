@@ -17,8 +17,8 @@
 package com.google.sample.castcompanionlibrary.cast;
 
 import android.content.Context;
-import android.support.v7.media.MediaRouter;
-import android.support.v7.media.MediaRouter.RouteInfo;
+import androidx.mediarouter.media.MediaRouter;
+import androidx.mediarouter.media.MediaRouter.RouteInfo;
 
 import com.google.android.gms.cast.CastDevice;
 import com.google.sample.castcompanionlibrary.cast.BaseCastManager.ReconnectionStatus;
