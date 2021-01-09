@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         minSdkVersion 13
-        targetSdkVersion 21
+        targetSdkVersion 23
     }
 
     sourceSets {
@@ -39,6 +39,6 @@ android {
 dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:mediarouter-v7:23.1.1'
-    compile 'com.google.android.gms:play-services-cast:8.1.0'
+    compile 'com.google.android.gms:play-services-cast:9.4.0'
     compile 'com.github.bumptech.glide:glide:3.6.1'
 }
