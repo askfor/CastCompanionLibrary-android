@@ -16,14 +16,13 @@
 
 package com.google.sample.castcompanionlibrary.cast.player;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,7 +49,7 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
 /**
- * This class provides an {@link Activity} that clients can easily add to their applications to
+ * This class provides an {@link AppCompatActivity} that clients can easily add to their applications to
  * provide an out-of-the-box remote player when a video is casting to a cast device.
  * {@link VideoCastManager} can manage the lifecycle and presentation of this activity.
  * <p>
@@ -64,7 +63,7 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
  * In that case, this activity manages starting the {@link IMediaAuthService} and will register a
  * listener to handle the result.
  */
-public class VideoCastControllerActivity extends ActionBarActivity implements IVideoCastController {
+public class VideoCastControllerActivity extends AppCompatActivity implements IVideoCastController {
 
     private static final String TAG = LogUtils.makeLogTag(VideoCastControllerActivity.class);
     private VideoCastManager mCastManager;

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bigContainer"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
@@ -11,7 +12,7 @@
         android:layout_height="@dimen/mini_controller_icon_height"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="7dp"
-        android:src="@drawable/mini_controller_img_placeholder"/>
+        app:srcCompat="@drawable/mini_controller_img_placeholder"/>
 
     <ImageView
         android:id="@+id/playPauseView"
@@ -20,7 +21,7 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:layout_marginRight="4dp"
-        android:src="@drawable/ic_mini_controller_pause"/>
+        app:srcCompat="@drawable/ic_mini_controller_pause"/>
 
     <ProgressBar
         android:id="@+id/loadingView"

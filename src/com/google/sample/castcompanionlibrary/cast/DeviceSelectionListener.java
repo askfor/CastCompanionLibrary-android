@@ -18,7 +18,7 @@ package com.google.sample.castcompanionlibrary.cast;
 
 import com.google.android.gms.cast.CastDevice;
 
-import android.support.v7.media.MediaRouter.RouteInfo;
+import androidx.mediarouter.media.MediaRouter.RouteInfo;
 
 /**
  * An interface that will be used to inform clients that a {@link CastDevice} is discovered by the

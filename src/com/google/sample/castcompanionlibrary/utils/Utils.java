@@ -16,7 +16,6 @@
 
 package com.google.sample.castcompanionlibrary.utils;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -31,6 +30,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import androidx.appcompat.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -301,7 +301,7 @@ public class Utils {
      * @param activity
      * @return
      */
-    public static boolean checkGooglePlayServices(final Activity activity) {
+    public static boolean checkGooglePlayServices(final AppCompatActivity activity) {
         final int googlePlayServicesCheck = GooglePlayServicesUtil.isGooglePlayServicesAvailable(
                 activity);
         switch (googlePlayServicesCheck) {
