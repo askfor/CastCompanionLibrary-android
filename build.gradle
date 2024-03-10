@@ -1,8 +1,9 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion '30.0.3'
+    namespace "com.google.sample.castcompanionlibrary"
+
+    compileSdk 29
     publishNonDefault true
 
     defaultConfig {
